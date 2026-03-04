@@ -1,0 +1,21 @@
+# Node
+node_modules/
+dist/
+.env
+.env.*
+
+package-lock.json
+
+# TypeScript
+*.tsbuildinfo
+
+# React
+build/
+
+# Logs
+*.log
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

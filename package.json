@@ -1,0 +1,36 @@
+{
+  "name": "playground",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gil392/Playground.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gil392/Playground/issues"
+  },
+  "homepage": "https://github.com/gil392/Playground#readme",
+  "devDependencies": {
+    "@nx/js": "^21.2.1",
+    "@nx/react": "^21.2.1",
+    "@types/jest": "^30.0.0",
+    "nx": "^21.2.1",
+    "start-server-and-test": "^2.1.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@types/selenium-webdriver": "^4.35.5",
+    "jest": "^30.2.0",
+    "selenium-webdriver": "^4.41.0",
+    "ts-jest": "^29.4.6"
+  }
+}

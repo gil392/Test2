@@ -1,0 +1,82 @@
+#!/bin/bash
+# e.g. ./bisect_all_selenium_tests.sh e56b6bbcf89d82cb8cbb414d70efb889afc8fe66 2041a3a1e35c898922e9c18ebb05f9b9cbdf94b5 src/test/tests
+BAD_COMMIT=$1
+GOOD_COMMIT=$2
+TEST_DIR=$3 # e.g. ./tests
+TEST_FILE=$4
+PROJECT_ROOT="/c/פרויקטים/Playground/Playground"
+LOGS_DIR="/c/פרויקטים/dist/bisect"
+
+if [[ -z "$BAD_COMMIT" || -z "$GOOD_COMMIT" || -z "$TEST_DIR" ]]; then
+  echo "Usage: $0 <bad_commit> <good_commit> <test_dir>"
+  exit 1
+fi
+
+echo "🔍 Looking for Selenium test files in $TEST_DIR"
+TEST_FILES=($(find "$TEST_DIR" -name "*.add.test.ts"))
+
+if [[ ${#TEST_FILES[@]} -eq 0 ]]; then
+  echo "❌ No test files found."
+  exit 1
+fi
+
+echo -e "\n🧪 Found ${#TEST_FILES[@]} tests:"
+for test in "${TEST_FILES[@]}"; do echo "  • $test"; done
+
+DETAILED_FILE="$LOGS_DIR/selenium_bisect_detailed.txt"
+SUMMARY_FILE="$LOGS_DIR/selenium_bisect_summary.txt"
+mkdir -p "$LOGS_DIR"
+> "$DETAILED_FILE"
+> "$SUMMARY_FILE"
+
+
+for test_file in "${TEST_FILES[@]}"; do
+  echo -e "\n🔍 Starting 1 bisect for: \"$test_file\""
+  cd "$PROJECT_ROOT" || exit 1
+  git log -1
+  git bisect start "$BAD_COMMIT" "$GOOD_COMMIT"
+
+  # Create runner script
+  # RUNNER_SCRIPT="$LOGS_DIR/runner_script.sh"
+  # cat <<EOF > "$RUNNER_SCRIPT"
+
+    # Create test runner that exits with Jest's actual result
+  RUNNER_SCRIPT="/tmp/bisect_runner.sh"
+  cat <<EOF > "$RUNNER_SCRIPT"
+#!/bin/bash
+cd $TEST_DIR
+echo "Running test: $test_name"
+npx jest --detectOpenHandles --forceExit --runInBand "$SUITE_FILE" -t "$test_name"
+cd $PROJECT_ROOT
+exit \$?
+EOF
+  
+#!/bin/bash
+echo "▶️ Running test: $test_file"
+cd "$PROJECT_ROOT" || exit 1
+
+npx ts-node "$test_file"
+EOF
+
+  chmod +x "$RUNNER_SCRIPT"
+
+  echo -e "\n🧪 START: $test_file\n" >> "$DETAILED_FILE"
+  git bisect run "$RUNNER_SCRIPT" >> "$DETAILED_FILE" 2>&1
+
+
+  BISECT_RESULT=$(grep 'is the first bad commit' "$DETAILED_FILE" | tail -n1 | grep -oE '^[0-9a-f]{7,40}')
+  if [[ -z "$BISECT_RESULT" ]]; then
+  echo "[$test_file] no bad commit found" >> "$SUMMARY_FILE"
+  else
+    COMMIT_MSG=$(git log -1 --pretty=%s "$BISECT_RESULT")
+    echo "[$test_file] failed first in commit $BISECT_RESULT: $COMMIT_MSG" >> "$SUMMARY_FILE"
+  fi
+  echo "✅ Done: $test_file → $BISECT_RESULT"
+  git bisect log >> "$DETAILED_FILE"
+
+  git bisect reset
+done
+
+echo -e "\n📄 Detailed log: $DETAILED_FILE"
+echo -e "📄 Summary log:  $SUMMARY_FILE"
+echo "✅ All bisects complete."
