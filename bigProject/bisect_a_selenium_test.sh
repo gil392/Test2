@@ -30,7 +30,6 @@ mkdir -p "$LOGS_DIR"
 echo -e "\n🔍 Starting bisect for: \"$TEST_FILE\""
 cd "$PROJECT_ROOT" || exit 1
 cd "$(git rev-parse --show-toplevel)" || exit 1
-# npm install
 git log -1
 git bisect start "$BAD_COMMIT" "$GOOD_COMMIT"
 
